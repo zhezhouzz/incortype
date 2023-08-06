@@ -1,0 +1,19 @@
+{
+  "mode": "debug",
+  "max_printing_size": 1000,
+  "debug_info": {
+    "show_preprocess": false,
+    "show_typing": false,
+    "show_queries": false,
+    "show_stat": false,
+    "show_info": false,
+    "show_debug": false
+  },
+  "logfile": ".log",
+  "resfile": ".result",
+  "benchmark_table_file": "data/benchmark.json",
+  "prim_path": {
+      "builtin_normal_typing": "data/predefined/builtin_normal_typing.ml",
+      "builtin_rty_typing": "data/predefined/builtin_rty_typing.ml"
+  }
+}
