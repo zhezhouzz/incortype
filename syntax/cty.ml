@@ -6,44 +6,63 @@ module F (L : Lit.T) = struct
   include P
   open Zzdatatype.Datatype
 
-  type cty = { v : string Nt.typed; phi : prop } [@@deriving sexp]
+  type cty =
+    | ApprCty of { v : string Nt.typed; phi : prop }
+    | EqCty of lit Nt.typed
+  [@@deriving sexp]
+
   type 'a ctyped = { cx : 'a; cty : cty }
 
-  let cty_typed_to_prop { cx; cty = { v = { x; ty }; phi } } =
-    (Nt.{ x = cx; ty }, P.subst_id (x, cx) phi)
+  let cty_typed_to_prop { cx; cty } =
+    match cty with
+    | ApprCty { v = { x; ty }; phi } ->
+        (Nt.{ x = cx; ty }, P.subst (x, AVar cx) phi)
+    | EqCty tlit ->
+        let phi = P.mk_teq tlit.ty (AVar cx) tlit.x in
+        let x = Nt.{ x = cx; ty = tlit.ty } in
+        (x, phi)
 
   (* subst *)
-  let subst (y, replacable) { v; phi } =
-    if String.equal y v.x then { v; phi }
-    else { v; phi = P.subst (y, replacable) phi }
-
-  let subst_id (y, z) = subst (y, AVar z)
+  let subst (y, replacable) cty =
+    match cty with
+    | ApprCty { v; phi } ->
+        if String.equal y v.x then cty
+        else ApprCty { v; phi = P.subst (y, replacable) phi }
+    | EqCty tlit ->
+        if String.equal y v_name then cty
+        else EqCty Nt.((L.subst (y, replacable)) #-> tlit)
 
   (* fv *)
-  let fv { v; phi } =
-    List.slow_rm_dup String.equal
-    @@ List.filter (fun x -> String.equal x v.x)
-    @@ P.fv phi
+  let fv = function
+    | ApprCty { v; phi } ->
+        List.slow_rm_dup String.equal
+        @@ List.filter (fun x -> String.equal x v.x)
+        @@ P.fv phi
+    | EqCty tlit -> L.fv tlit.x
 
   (* erase *)
 
-  let erase_cty { v; _ } = v.ty
+  let erase = function ApprCty { v; _ } -> v.ty | EqCty tlit -> tlit.ty
 
   (* normalize name *)
 
-  let normalize_name_cty { v; phi } =
-    let phi = P.(subst_id (v.x, v_name) phi) in
-    let v = Nt.{ x = v_name; ty = v.ty } in
-    { v; phi }
+  let normalize_name = function
+    | EqCty _ as cty -> cty
+    | ApprCty { v; phi } -> (
+        let phi = P.(subst (v.x, AVar v_name) phi) in
+        let v = Nt.{ x = v_name; ty = v.ty } in
+        match P.get_eq_by_name phi v_name with
+        | None -> ApprCty { v; phi }
+        | Some lit -> EqCty Nt.{ x = lit; ty = v.ty })
 
   (* mk bot/top *)
 
-  let mk_unit_from_prop phi = Nt.{ v = v_name #: Ty_unit; phi }
+  let mk_unit_from_prop phi = ApprCty { v = Nt.(v_name #: Ty_unit); phi }
 
-  let mk_eq_lit v lit =
-    let ty : t = from_nt v.Nt.ty in
-    { v; phi = P.mk_eq_lit { x = v.Nt.x; ty } lit }
+  (* let mk_eq_lit v lit = *)
+  (*   let ty : t = from_nt v.Nt.ty in *)
+  (*   { v; phi = P.mk_teq v.Nt.ty v.Nt.x lit } *)
 
-  let mk_bot nt = Nt.{ v = v_name #: nt; phi = mk_bool false }
-  let mk_top nt = Nt.{ v = v_name #: nt; phi = mk_bool true }
+  let mk_bot nt = ApprCty { v = Nt.(v_name #: nt); phi = mk_bool false }
+  let mk_top nt = ApprCty { v = Nt.(v_name #: nt); phi = mk_bool true }
 end

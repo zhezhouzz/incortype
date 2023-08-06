@@ -2,7 +2,6 @@
  (name syntax)
  (wrapped false)
  (modules
-   connective
    langlike
    constant
    op
@@ -12,12 +11,9 @@
    qualifier
    cty
    rty
-   ; algebraic
    type_dec
    typectx
    structure
-   minterm
-   nregex
    syntax
  )
  (preprocess (pps ppx_optcomp ppx_compare ppx_sexp_conv))

@@ -28,14 +28,13 @@ and lit_to_ocamlexpr_desc (expr : lit) =
           List.map (fun x -> (Asttypes.Nolabel, typed_lit_to_ocamlexpr x)) args
         in
         Pexp_apply (op, args)
-    | ATu l -> Pexp_tuple (List.map typed_lit_to_ocamlexpr l)
-    | AProj (a, idx) ->
-        let a = (Asttypes.Nolabel, typed_lit_to_ocamlexpr a) in
-        let idx =
-          ( Asttypes.Nolabel,
-            typed_lit_to_ocamlexpr (AC (Constant.I idx)) #: (Some Nt.int_ty) )
+    | AEq (l1, l2) ->
+        let l1 = (Asttypes.Nolabel, typed_lit_to_ocamlexpr l1) in
+        let l2 = (Asttypes.Nolabel, typed_lit_to_ocamlexpr l2) in
+        let op =
+          To_expr.typed_op_to_ocamlexpr @@ ((Op.BuiltinOp "==") #: None)
         in
-        Pexp_apply (To_expr.id_to_ocamlexpr f_proj, [ a; idx ])
+        Pexp_apply (op, [ l1; l2 ])
     | AVar x -> (To_expr.id_to_ocamlexpr x).pexp_desc
   in
   aux expr
@@ -48,7 +47,12 @@ let rec term_to_lit expr =
     match e with
     | Const c -> AC c
     | Var id -> AVar id
-    | AppOp (op, args) -> AAppOp (op, List.map term_to_lit args)
+    | AppOp (op, args) -> (
+        let args = List.map term_to_lit args in
+        match (op.x, args) with
+        | Op.BuiltinOp "==", [ a; b ] -> AEq (a, b)
+        | Op.BuiltinOp "==", _ -> _failatwith __FILE__ __LINE__ "?"
+        | _, _ -> AAppOp (op, args))
     | App (op, args) ->
         let op =
           match op.x with
@@ -59,7 +63,6 @@ let rec term_to_lit expr =
               @@ To_expr.layout expr
         in
         AAppOp (op, List.map term_to_lit args)
-    | Tu es -> ATu (List.map term_to_lit es)
     | _ ->
         _failatwith __FILE__ __LINE__
         @@ spf "parsing: not a op (%s)"

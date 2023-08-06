@@ -27,9 +27,7 @@ module FF (L : Lit.T) = struct
     in
     aux e
 
-  let subst_id (y, z) e = subst (y, AVar z) e
   let msubst = List.fold_right subst
-  let msubst_id = List.fold_right subst_id
 
   let fv e =
     let rec aux e =
@@ -50,7 +48,8 @@ module FF (L : Lit.T) = struct
   let is_bool b p =
     match to_bool_opt p with Some b' -> Bool.equal b b' | _ -> false
 
-  let mk_eq_lit x lit = Lit (L.mk_eq_lit x lit)
+  let mk_eq l1 l2 = Lit (L.mk_eq l1 l2).x
+  let mk_teq nt l1 l2 = Lit (L.mk_teq nt l1 l2).x
   let mk_and l = Multi (And, l)
   let mk_or l = Multi (Or, l)
   let mk_impl a b = Binary (Implies, a, b)
@@ -119,8 +118,8 @@ module F (L : Lit.T) = struct
     | Some b, Some b' when b != b' -> mk_bool false
     | _, _ -> mk_impl a b
 
-  let get_eqprop_by_name prop x =
-    match prop with Lit lit -> get_eqlit_by_name lit x | _ -> None
+  let get_eq_by_name prop x =
+    match prop with Lit lit -> get_eq_by_name lit x | _ -> None
 
   let smart_qted qt (u, xprop) prop =
     let body =
@@ -131,7 +130,7 @@ module F (L : Lit.T) = struct
     match u.Nt.ty with
     | Nt.Ty_unit -> body
     | _ -> (
-        match get_eqprop_by_name xprop u.Nt.x with
+        match get_eq_by_name xprop u.Nt.x with
         | None -> Qted (qt, u, body)
         | Some z -> subst (u.Nt.x, z) prop)
 

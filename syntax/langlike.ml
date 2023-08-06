@@ -1,3 +1,5 @@
+include Normalty.Connective
+
 module type Sexpable = sig
   type t
 
@@ -15,16 +17,31 @@ functor
     let eq a b = compare a b == 0
   end
 
+module type Layoutable = sig
+  type t
+
+  val layout : t -> string
+end
+
+module type BindingName = sig
+  type t
+
+  val equal : t -> t -> bool
+  val layout : t -> string
+end
+
 module Nt = struct
   include Normalty.Ntyped
 
   let from_nt t = t
+  let eq_ty t = mk_arr t (mk_arr t bool_ty)
 end
 
 module ONt = struct
   include Normalty.NOpttyped
 
   let from_nt t = Some t
+  let eq_ty t = mk_arr t (mk_arr t bool_ty)
 end
 
 let v_name = "v"

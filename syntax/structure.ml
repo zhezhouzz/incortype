@@ -1,3 +1,5 @@
+open Langlike
+
 module F (L : Lit.T) = struct
   include Termlang.F (L)
   module R = Rty.F (L)
@@ -5,7 +7,6 @@ module F (L : Lit.T) = struct
   type rty_kind = RtyLib | RtyToCheck
 
   type entry =
-    (* | Mps of string list *)
     | Type_dec of Type_dec.t
     | Func_dec of string Normalty.Ntyped.typed
     | FuncImp of { name : string; if_rec : bool; body : term typed }
@@ -16,22 +17,24 @@ module F (L : Lit.T) = struct
   (* open Sugar *)
   open Zzdatatype.Datatype
 
-  let mk_normal_top_ctx_ = function
-    | FuncImp _ -> []
-    | Rty { name; kind; rty } -> (
-        match kind with RtyLib -> [ (name, R.erase rty) ] | RtyToCheck -> [])
-    | Func_dec x -> [ (x.x, x.ty) ]
-    | Type_dec _ -> []
-
-  let mk_normal_top_opctx_ = function
+  let mk_normal_opctx_ = function
     | FuncImp _ -> []
     | Rty _ -> []
-    | Func_dec _ -> []
-    | Type_dec d ->
-        List.map (fun R.Nt.{ x; ty } -> (x, ty)) @@ Type_dec.mk_ctx_ d
+    | Func_dec x -> [ (Op.BuiltinOp x.x, x.ty) ]
+    | Type_dec d -> List.map (fun Nt.{ x; ty } -> (x, ty)) @@ Type_dec.mk_ctx_ d
 
-  let mk_normal_top_ctx es = List.concat @@ List.map mk_normal_top_ctx_ es
-  let mk_normal_top_opctx es = List.concat @@ List.map mk_normal_top_opctx_ es
+  let mk_normal_opctx es = List.concat @@ List.map mk_normal_opctx_ es
+
+  let mk_normal_ctx_ = function
+    | FuncImp _ -> []
+    | Rty { name; kind; rty } -> (
+        match kind with
+        | RtyLib -> [ (name, R.erase_rty rty) ]
+        | RtyToCheck -> [])
+    | Func_dec _ -> []
+    | Type_dec _ -> []
+
+  let mk_normal_ctx es = List.concat @@ List.map mk_normal_ctx_ es
 
   let map_imps f codes =
     List.map
