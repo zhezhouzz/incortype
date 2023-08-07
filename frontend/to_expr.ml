@@ -158,7 +158,6 @@ let expr_of_ocamlexpr expr =
         (*   Printf.printf "check op: %s\n" (Pprintast.string_of_expression expr) *)
         (* in *)
         let c = To_pat.constructor_to_term_or_op @@ To_id.longid_to_id c in
-        (* let () = Printf.printf "Pat: %s\n" c in *)
         match c with
         | To_pat.C_is_term tm -> tm
         | To_pat.C_is_op op -> (

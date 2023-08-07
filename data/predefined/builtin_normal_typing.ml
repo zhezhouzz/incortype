@@ -1,4 +1,5 @@
-val ( != ) : int -> int -> int
+val ( == ) : int -> int -> bool
+val ( != ) : int -> int -> bool
 val ( < ) : int -> int -> bool
 val ( <= ) : int -> int -> bool
 val ( > ) : int -> int -> bool

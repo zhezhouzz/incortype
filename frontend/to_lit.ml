@@ -49,20 +49,26 @@ let rec term_to_lit expr =
     | Var id -> AVar id
     | AppOp (op, args) -> (
         let args = List.map term_to_lit args in
+        (* let _ = Printf.printf "-- op: %s\n" (Op.to_string op.x) in *)
         match (op.x, args) with
         | Op.BuiltinOp "==", [ a; b ] -> AEq (a, b)
         | Op.BuiltinOp "==", _ -> _failatwith __FILE__ __LINE__ "?"
         | _, _ -> AAppOp (op, args))
-    | App (op, args) ->
-        let op =
-          match op.x with
-          | Var id -> { x = Op.BuiltinOp id; ty = op.ty }
-          | _ ->
-              _failatwith __FILE__ __LINE__
-              @@ spf "parsing: not a op (%s)"
-              @@ To_expr.layout expr
-        in
-        AAppOp (op, List.map term_to_lit args)
+    | App (op, args) -> (
+        let args = List.map term_to_lit args in
+        match (op.x, args) with
+        | Var "==", [ a; b ] -> AEq (a, b)
+        | Var "==", _ ->
+            _failatwith __FILE__ __LINE__
+            @@ spf "parsing: not a op (%s)"
+            @@ To_expr.layout expr
+        | Var id, args ->
+            let op = { x = Op.BuiltinOp id; ty = op.ty } in
+            AAppOp (op, args)
+        | _, _ ->
+            _failatwith __FILE__ __LINE__
+            @@ spf "parsing: not a op (%s)"
+            @@ To_expr.layout expr)
     | _ ->
         _failatwith __FILE__ __LINE__
         @@ spf "parsing: not a op (%s)"

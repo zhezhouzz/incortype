@@ -1,0 +1,13 @@
+(library
+ (name ntypecheck)
+ (wrapped true)
+ (libraries utils language core env ocolor)
+ (modules
+   ntypecheck
+   ttypecheck
+   rtycheck
+   qualifiercheck
+   ctycheck
+   litcheck
+   aux
+))

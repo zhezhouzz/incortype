@@ -48,3 +48,4 @@ let cty_of_ocamlexpr expr =
   normalize_name cty
 
 let layout_cty = pprint_cty
+let layout = pprint_cty

@@ -24,9 +24,8 @@ module StructureRaw = struct
 
   let layout_term = To_expr.layout
   let layout_term_omit_type = To_expr.layout_omit_type
-  let layout_cty = To_cty.layout_cty
-  let layout_rty = To_rty.layout_rty
-  let layout_uty = To_rty.layout_uty
+  let layout_cty = To_cty.layout
+  let layout_rty = To_rty.layout
   let layout_entry = To_structure.layout_entry
   let layout_structure = To_structure.layout
 end
@@ -37,8 +36,7 @@ module Rty = struct
   let layout_lit lit = To_lit.layout_lit (Coersion_lit.besome lit)
   let layout_prop prop = To_qualifier.layout (Coersion_qualifier.besome prop)
   let layout_cty rty = StructureRaw.layout_cty (Coersion_cty.besome rty)
-  let layout_rty rty = StructureRaw.layout_rty (Coersion_rty.besome_rty rty)
-  let layout_uty rty = StructureRaw.layout_uty (Coersion_rty.besome_uty rty)
+  let layout_rty rty = StructureRaw.layout_rty (Coersion_rty.besome rty)
 end
 
 module Structure = struct
@@ -56,29 +54,36 @@ module Structure = struct
 
   let layout_structure x =
     StructureRaw.layout_structure @@ Coersion_structure.besome_structure x
+
+  let mk_rty_primopctx es =
+    let mk_rty_primopctx_ = function
+      | Rty { name; rty; kind } -> (
+          match (To_op.string_to_op name, kind) with
+          | Some op, RtyLib -> [ (op, rty) ]
+          | _, _ -> [])
+      | _ -> []
+    in
+    List.concat @@ List.map mk_rty_primopctx_ es
+
+  let mk_rty_ctx es =
+    let mk_rty_ctx_ = function
+      | Rty { name; rty; kind = RtyLib } -> [ (name, rty) ]
+      | _ -> []
+    in
+    let rctx = List.concat @@ List.map mk_rty_ctx_ es in
+    let nctx = List.map (fun (x, rty) -> (x, R.erase_rty rty)) rctx in
+    (rctx, nctx)
 end
 
-module POpTypectx = struct
+module ROpTypectx = struct
   include Rty
 
   include Typectx.FOp (struct
     include Rty
 
-    type t = uty
+    type t = rty
 
-    let layout = layout_uty
-  end)
-end
-
-module PTypectx = struct
-  include Rty
-
-  include Typectx.FString (struct
-    include Rty
-
-    type t = uty
-
-    let layout = layout_uty
+    let layout = layout_rty
   end)
 end
 
@@ -88,8 +93,8 @@ module RTypectx = struct
   include Typectx.FString (struct
     include Rty
 
-    type t = uty
+    type t = rty
 
-    let layout = layout_uty
+    let layout = layout_rty
   end)
 end

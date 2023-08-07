@@ -53,6 +53,23 @@ module F (L : Lit.T) = struct
         | _ -> code)
       codes
 
+  let get_lib_rtys codes =
+    List.filter
+      (fun code ->
+        match code with Rty { kind = RtyLib; _ } -> true | _ -> false)
+      codes
+
+  let get_assert_rtys codes =
+    List.filter
+      (fun code ->
+        match code with Rty { kind = RtyToCheck; _ } -> true | _ -> false)
+      codes
+
+  let get_imps codes =
+    List.filter
+      (fun code -> match code with FuncImp _ -> true | _ -> false)
+      codes
+
   let filter_map_imps f codes =
     List.filter_map
       (fun code ->

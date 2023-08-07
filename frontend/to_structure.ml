@@ -61,6 +61,6 @@ let layout_entry = function
   | Rty { name; kind; rty } ->
       spf "val[@%s] %s: %s"
         (match kind with RtyLib -> "librty" | RtyToCheck -> "rty")
-        name (To_rty.pprint_rty rty)
+        name (To_rty.layout rty)
 
 let layout l = spf "%s\n" (List.split_by "\n" layout_entry l)

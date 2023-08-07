@@ -10,30 +10,25 @@ let besome_arr_kind = function
   | NormalArr -> Raw.NormalArr
   | GhostArr -> Raw.GhostArr
 
-let rec force_rty rty =
+let force_ou_kind = function Raw.Over -> Over | Raw.Under -> Under
+let besome_ou_kind = function Over -> Raw.Over | Under -> Raw.Under
+
+let rec force rty =
   match rty with
-  | Raw.BaseRty cty -> BaseRty (Coersion_cty.force cty)
+  | Raw.BaseRty { ou; cty } ->
+      BaseRty { ou = force_ou_kind ou; cty = Coersion_cty.force cty }
   | Raw.ArrRty { arr_kind; rarg; retrty } ->
       let arr_kind = force_arr_kind arr_kind in
-      let Raw.{ ux; uty } = rarg in
-      let rarg = ux #::: (force_uty uty) in
-      ArrRty { arr_kind; rarg; retrty = force_rty retrty }
+      let Raw.{ rx; rty } = rarg in
+      let rarg = rx #:: (force rty) in
+      ArrRty { arr_kind; rarg; retrty = force retrty }
 
-and force_uty ty =
-  match ty with
-  | Raw.BaseUty cty -> BaseUty (Coersion_cty.force cty)
-  | Raw.ArrUty rty -> ArrUty (force_rty rty)
-
-let rec besome_rty rty =
+let rec besome rty =
   match rty with
-  | BaseRty cty -> Raw.BaseRty (Coersion_cty.besome cty)
+  | BaseRty { ou; cty } ->
+      Raw.BaseRty { ou = besome_ou_kind ou; cty = Coersion_cty.besome cty }
   | ArrRty { arr_kind; rarg; retrty } ->
       let arr_kind = besome_arr_kind arr_kind in
-      let { ux; uty } = rarg in
-      let rarg = Raw.(ux #::: (besome_uty uty)) in
-      Raw.ArrRty { arr_kind; rarg; retrty = besome_rty retrty }
-
-and besome_uty ty =
-  match ty with
-  | BaseUty cty -> Raw.BaseUty (Coersion_cty.besome cty)
-  | ArrUty rty -> Raw.ArrUty (besome_rty rty)
+      let { rx; rty } = rarg in
+      let rarg = Raw.(rx #:: (besome rty)) in
+      Raw.ArrRty { arr_kind; rarg; retrty = besome retrty }
