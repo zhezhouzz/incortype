@@ -30,6 +30,22 @@ module StructureRaw = struct
   let layout_structure = To_structure.layout
 end
 
+module TypedCore = struct
+  include Corelang.F (Nt)
+  (* open Sugar *)
+
+  (* let _value_to_lit file line v = *)
+  (*   let lit = *)
+  (*     match v.x with *)
+  (*     | VVar name -> Rty.P.AVar name *)
+  (*     | VConst c -> Rty.P.AC c *)
+  (*     | VLam _ -> _failatwith file line "?" *)
+  (*     | VFix _ -> _failatwith file line "?" *)
+  (*     | VTu _ -> _failatwith file line "?" *)
+  (*   in *)
+  (*   lit #: v.ty *)
+end
+
 module Rty = struct
   include Rty
 

@@ -10,7 +10,6 @@ module type T = sig
         fixarg : string typed;
         fixbody : comp typed;
       }
-    | VTu of value typed list
 
   and match_case = {
     constructor : string typed;
@@ -26,6 +25,13 @@ module type T = sig
     | CApp of { appf : value typed; apparg : value typed }
     | CAppOp of { op : Op.t typed; appopargs : value typed list }
   [@@deriving sexp]
+
+  (* aux *)
+  val mk_lam : string typed -> comp typed -> value typed
+  val mk_fix : string typed -> string typed -> comp typed -> value typed
+  val mk_lete : string typed -> comp typed -> comp typed -> comp typed
+  val mk_app : value typed -> value typed -> comp typed
+  val lam_to_fix_comp : string typed -> comp typed -> comp typed
 
   (* cast *)
   val to_value : comp -> value
@@ -56,7 +62,6 @@ struct
         fixarg : string typed;
         fixbody : comp typed;
       }
-    | VTu of value typed list
 
   and match_case = {
     constructor : string typed;
@@ -95,6 +100,24 @@ struct
 
   let tcomp_to_str x = comp_to_str #-> x
 
+  let mk_lam (lamarg : string typed) (lambody : comp typed) : value typed =
+    (VLam { lamarg; lambody }) #: (mk_arr lamarg.ty lambody.ty)
+
+  let mk_fix (fixname : string typed) (fixarg : string typed)
+      (fixbody : comp typed) : value typed =
+    (VFix { fixname; fixarg; fixbody }) #: fixname.ty
+
+  let mk_lete lhs rhs letbody = (CLetE { lhs; rhs; letbody }) #: letbody.ty
+  let mk_app appf apparg = (CApp { appf; apparg }) #: (get_retty appf.ty)
+
+  let lam_to_fix fixname (body : value typed) : value typed =
+    match body.x with
+    | VLam { lamarg; lambody } -> mk_fix fixname lamarg lambody
+    | _ -> _failatwith __FILE__ __LINE__ ""
+
+  let lam_to_fix_comp fixname (body : comp typed) : comp typed =
+    tto_comp (lam_to_fix fixname (tto_value body))
+
   open Zzdatatype.Datatype
 
   let rec subst_value (x, v) e : value typed =
@@ -109,7 +132,6 @@ struct
         else
           (VFix { fixname; fixarg; fixbody = subst_comp (x, v) fixbody })
           #: e.ty
-    | VTu vs -> (VTu (List.map (subst_value (x, v)) vs)) #: e.ty
 
   and subst_match_case (x, v) { constructor; args; exp } =
     let exp =

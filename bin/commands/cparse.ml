@@ -68,5 +68,14 @@ let test =
             let () =
               Printf.printf "%s\n" @@ Structure.layout_structure source_code
             in
+            let deccuried = Decurry.deccury_code source_code in
+            let normalized = Normalize.get_normalized_code deccuried in
+            let () =
+              List.iter
+                ~f:(fun (name, e) ->
+                  Pp.printf "%s:\n%s\n" name
+                    (Denormalize.layout_comp_omit_type e))
+                normalized
+            in
             ()) );
     ]
