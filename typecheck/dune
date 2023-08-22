@@ -1,0 +1,13 @@
+(library
+ (name typecheck)
+ (libraries utils env language normalization
+ )
+ (modules
+   typeerr
+   ; linear_typectx
+   ; bitypectx
+   type_ctx
+   typingaux
+   bidirectional
+ )
+)

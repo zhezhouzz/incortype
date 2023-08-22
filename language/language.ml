@@ -32,6 +32,9 @@ end
 
 module TypedCore = struct
   include Corelang.F (Nt)
+
+  let layout_term e =
+    StructureRaw.layout_term @@ Coersion_termlang.besome_typed_term e
   (* open Sugar *)
 
   (* let _value_to_lit file line v = *)

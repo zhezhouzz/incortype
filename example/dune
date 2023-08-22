@@ -1,0 +1,9 @@
+(library
+ (name example)
+ (wrapped false)
+ (modules
+   exset
+ )
+ (preprocess (pps ppx_optcomp ppx_compare ppx_sexp_conv))
+ (libraries zzdatatype utils normal5ty qcheck)
+)

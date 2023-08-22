@@ -94,6 +94,23 @@ module F (L : Lit.T) = struct
   let erase_rtyped_opt { rx; rty } =
     match rx with None -> None | Some x -> Some Nt.{ x; ty = erase_rty rty }
 
+  (* fresh local name *)
+
+  let rec fresh_local_name tau =
+    match tau with
+    | BaseRty _ -> tau
+    | ArrRty { arr_kind; rarg; retrty } -> (
+        let rarg_ty = fresh_local_name rarg.rty in
+        match rarg.rx with
+        | None ->
+            let rarg = None #:: rarg_ty in
+            ArrRty { arr_kind; rarg; retrty = fresh_local_name retrty }
+        | Some x ->
+            let fresh_name = Rename.unique x in
+            let rarg = (Some fresh_name) #:: rarg_ty in
+            let retrty = subst (x, L.AVar fresh_name) retrty in
+            ArrRty { arr_kind; rarg; retrty = fresh_local_name retrty })
+
   (* normalize name *)
 
   let rec normalize_name tau =
@@ -128,6 +145,10 @@ module F (L : Lit.T) = struct
     | _, _ -> _failatwith __FILE__ __LINE__ "?"
 
   let mk_unit_from_prop ou phi = BaseRty { ou; cty = C.mk_unit_from_prop phi }
+
+  let mk_eq_from_var x =
+    let tlit = Nt.((C.AVar x.x) #: x.ty) in
+    BaseRty { ou = Under; cty = C.EqCty tlit }
 
   (* mk bot/top *)
   (* TODO: what is a bot arr type? *)

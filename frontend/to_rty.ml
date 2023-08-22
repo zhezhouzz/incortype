@@ -54,7 +54,7 @@ let kind_arr_of_ocaml pat =
 
 let ou_of_ocaml e =
   match e.pexp_attributes with
-  | [] -> Over
+  | [] -> Under
   | [ a ] when String.equal a.attr_name.txt "over" -> Over
   | [ a ] when String.equal a.attr_name.txt "under" -> Under
   | _ -> _failatwith __FILE__ __LINE__ "die"

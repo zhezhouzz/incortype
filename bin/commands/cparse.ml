@@ -35,6 +35,10 @@ let cmd_config_source summary f =
 let test =
   Command.group ~summary:"Poirot"
     [
+      ( "test-example",
+        cmd_config "test init" (fun meta_config_file () ->
+            let _ = Exset.Set.test () in
+            ()) );
       ( "test-init",
         cmd_config "test init" (fun meta_config_file () ->
             let primop_nctx, primop_rctx = init_builtinctx () in
@@ -76,6 +80,22 @@ let test =
                   Pp.printf "%s:\n%s\n" name
                     (Denormalize.layout_comp_omit_type e))
                 normalized
+            in
+            let assertions = Structure.get_assert_rtys source_code in
+            let ress =
+              List.fold_left
+                ~f:(fun ress (name, tau) ->
+                  let _ = Printf.printf "name: %s\n" name in
+                  let _, prog =
+                    List.find_exn
+                      ~f:(fun (x, _) -> String.equal x name)
+                      normalized
+                  in
+                  let res =
+                    Typecheck.Bidirectional.typecheck primop_rctx rctx prog tau
+                  in
+                  res :: ress)
+                ~init:[] assertions
             in
             ()) );
     ]

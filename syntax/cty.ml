@@ -13,6 +13,8 @@ module F (L : Lit.T) = struct
 
   type 'a ctyped = { cx : 'a; cty : cty }
 
+  let mk_unit_from_prop phi = ApprCty { v = Nt.(v_name #: Ty_unit); phi }
+
   let cty_typed_to_prop { cx; cty } =
     match cty with
     | ApprCty { v = { x; ty }; phi } ->
@@ -21,6 +23,13 @@ module F (L : Lit.T) = struct
         let phi = P.mk_teq tlit.ty (AVar cx) tlit.x in
         let x = Nt.{ x = cx; ty = tlit.ty } in
         (x, phi)
+
+  let to_v_prop cty =
+    match cty with
+    | ApprCty { v; phi } -> (v, phi)
+    | EqCty tlit ->
+        let phi = P.mk_teq tlit.ty (AVar v_name) tlit.x in
+        (Nt.(v_name #: tlit.ty), phi)
 
   (* subst *)
   let subst (y, replacable) cty =
@@ -36,7 +45,7 @@ module F (L : Lit.T) = struct
   let fv = function
     | ApprCty { v; phi } ->
         List.slow_rm_dup String.equal
-        @@ List.filter (fun x -> String.equal x v.x)
+        @@ List.filter (fun x -> not (String.equal x v.x))
         @@ P.fv phi
     | EqCty tlit -> L.fv tlit.x
 
@@ -56,8 +65,6 @@ module F (L : Lit.T) = struct
         | Some lit -> EqCty Nt.{ x = lit; ty = v.ty })
 
   (* mk bot/top *)
-
-  let mk_unit_from_prop phi = ApprCty { v = Nt.(v_name #: Ty_unit); phi }
 
   (* let mk_eq_lit v lit = *)
   (*   let ty : t = from_nt v.Nt.ty in *)

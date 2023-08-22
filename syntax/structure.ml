@@ -60,15 +60,31 @@ module F (L : Lit.T) = struct
       codes
 
   let get_assert_rtys codes =
-    List.filter
+    List.filter_map
       (fun code ->
-        match code with Rty { kind = RtyToCheck; _ } -> true | _ -> false)
+        match code with
+        | Rty { kind = RtyToCheck; name; rty } -> Some (name, rty)
+        | _ -> None)
       codes
 
   let get_imps codes =
     List.filter
       (fun code -> match code with FuncImp _ -> true | _ -> false)
       codes
+
+  open Sugar
+
+  let get_imp_by_name codes x =
+    let res =
+      List.filter_map
+        (fun code ->
+          match code with
+          | FuncImp { name; if_rec; body } when String.equal name x ->
+              Some (if_rec, body)
+          | _ -> None)
+        codes
+    in
+    match res with [ res ] -> res | _ -> _failatwith __FILE__ __LINE__ "die"
 
   let filter_map_imps f codes =
     List.filter_map

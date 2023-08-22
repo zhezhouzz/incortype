@@ -1,6 +1,6 @@
 (library
  (name commands)
- (libraries utils core core_unix.sys_unix frontend env language ntypecheck normalization
+ (libraries utils core core_unix.sys_unix frontend env language ntypecheck normalization example typecheck
  )
  (modules
    caux
