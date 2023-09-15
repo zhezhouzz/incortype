@@ -9,22 +9,30 @@ let rec denormalize_comp (comp : comp typed) : T.term T.typed =
   let compty = comp.ty in
   let res =
     match comp.x with
-    | CErr -> T.Err
     | CVal v -> T.((denormalize_value v #: compty).x)
     | CMatch { matched; match_cases } ->
         T.(
           Match
             ( denormalize_value matched,
               List.map denormalize_match_case match_cases ))
-    | CLetE { lhs; rhs; letbody } ->
+    | CLet { lhs; rhs; letbody } ->
         T.(
           Let
             {
               if_rec = false;
               lhs = [ lhs ];
-              rhs = denormalize_comp rhs;
+              rhs = denormalize_rhs rhs;
               letbody = denormalize_comp letbody;
             })
+  in
+  T.(res #: compty)
+
+and denormalize_rhs (rhs : rhs typed) : T.term T.typed =
+  let compty = rhs.ty in
+  let res =
+    match rhs.x with
+    | CErr -> T.Err
+    | CRhsV v -> T.((denormalize_value v #: compty).x)
     | CApp { appf; apparg } ->
         T.(App (denormalize_value appf, [ denormalize_value apparg ]))
     | CAppOp { op; appopargs } ->

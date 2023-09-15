@@ -1,0 +1,17 @@
+-Q . CT
+Atom.v
+Tactics.v
+CoreLang.v
+NamelessTactics.v
+CoreLangProp.v
+PrimOpSemantics.v
+OperationalSemantics.v
+BasicTyping.v
+BasicTypingProp.v
+Qualifier.v
+ListCtx.v
+RefinementType.v
+Instantiation.v
+Denotation.v
+DenotationProp.v
+# Typing.v

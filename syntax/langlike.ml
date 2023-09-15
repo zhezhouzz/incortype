@@ -44,6 +44,22 @@ module ONt = struct
   let eq_ty t = mk_arr t (mk_arr t bool_ty)
 end
 
+type arr_kind = NormalArr | GhostArr [@@deriving sexp]
+
+let arr_kind_eq k1 k2 =
+  match (k1, k2) with
+  | NormalArr, NormalArr | GhostArr, GhostArr -> true
+  | _, _ -> false
+
+type refinement_kind = Over | Under | Overlap [@@deriving sexp]
+
+let refinement_kind_eq a b =
+  match (a, b) with
+  | Over, Over | Under, Under | Overlap, Overlap -> true
+  | _, _ -> false
+
+type rty_kind = RtyLib | RtyToCheck
+
 let v_name = "v"
 
 open Sugar

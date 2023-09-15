@@ -1,4 +1,4 @@
-let[@librty] bar ?l:(a = (v > 7 : [%v: int])) : [%v: int] = v > 3
+let[@librty] bar ?l:(_ = (v > 7 : [%v: int])) : [%v: int] = v > 3
 
 let rec foo (x : int) : int =
   let (y : int) = x + 1 in
@@ -8,4 +8,4 @@ let rec foo (x : int) : int =
   let (p : int) = bar k in
   p
 
-let[@assert] foo ?l:(a = (v > 1 : [%v: int])) : [%v: int] = v > 7
+let[@assert] foo ?l:(_ = (v > 1 : [%v: int])) : [%v: int] = v > 7

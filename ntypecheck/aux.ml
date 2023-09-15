@@ -3,7 +3,8 @@ open Language
 (* open Const *)
 module Ctx = NTypectx
 module OpCtx = NOpTypectx
-open Nt
+
+(* open Nt *)
 open Sugar
 
 let is_builtop opctx x = OpCtx.exists opctx (Op.BuiltinOp x)
@@ -12,12 +13,15 @@ let infer_const_ty _ = Const.infer_const_ty
 let infer_op opctx x =
   match x with
   | Op.BuiltinOp _ -> OpCtx.find opctx x
-  | Op.DtOp x -> (
-      match x with
-      | "S" -> Ty_arrow (Ty_int, Ty_int)
-      | _ ->
-          _failatwith __FILE__ __LINE__
-          @@ spf "cannot infer the basic type of %s" x)
+  | Op.DtOp x ->
+      let x = Printf.sprintf "_%s" x in
+      OpCtx.find opctx (Op.BuiltinOp x)
+(* ( *)
+(*   match x with *)
+(*   | "S" -> Ty_arrow (Ty_int, Ty_int) *)
+(*   | _ -> *)
+(*       _failatwith __FILE__ __LINE__ *)
+(*       @@ spf "cannot infer the basic type of %s" x) *)
 
 open ONt
 open Zzdatatype.Datatype

@@ -17,20 +17,24 @@ module type T = sig
     exp : comp typed;
   }
 
-  and comp =
+  and rhs =
+    | CRhsV of value
     | CErr
-    | CVal of value
-    | CLetE of { lhs : string typed; rhs : comp typed; letbody : comp typed }
-    | CMatch of { matched : value typed; match_cases : match_case list }
     | CApp of { appf : value typed; apparg : value typed }
     | CAppOp of { op : Op.t typed; appopargs : value typed list }
+
+  and comp =
+    | CVal of value
+    | CLet of { lhs : string typed; rhs : rhs typed; letbody : comp typed }
+    | CMatch of { matched : value typed; match_cases : match_case list }
   [@@deriving sexp]
 
   (* aux *)
   val mk_lam : string typed -> comp typed -> value typed
   val mk_fix : string typed -> string typed -> comp typed -> value typed
-  val mk_lete : string typed -> comp typed -> comp typed -> comp typed
-  val mk_app : value typed -> value typed -> comp typed
+  val mk_let : string typed -> rhs typed -> comp typed -> comp typed
+  val mk_app : value typed -> value typed -> rhs typed
+  val mk_appop : Op.t typed -> value typed list -> rhs typed
   val lam_to_fix_comp : string typed -> comp typed -> comp typed
 
   (* cast *)
@@ -40,6 +44,9 @@ module type T = sig
   val tto_comp : value typed -> comp typed
   val tcomp_to_str : comp typed -> string typed
   val tvalue_to_str : value typed -> string typed
+
+  (* val value_to_lit : value -> lit *)
+  (* val tvalue_to_tlit : value typed -> lit typed *)
 
   (* subst *)
   val subst_value : string * value typed -> value typed -> value typed
@@ -69,13 +76,16 @@ struct
     exp : comp typed;
   }
 
-  and comp =
+  and rhs =
+    | CRhsV of value
     | CErr
-    | CVal of value
-    | CLetE of { lhs : string typed; rhs : comp typed; letbody : comp typed }
-    | CMatch of { matched : value typed; match_cases : match_case list }
     | CApp of { appf : value typed; apparg : value typed }
     | CAppOp of { op : Op.t typed; appopargs : value typed list }
+
+  and comp =
+    | CVal of value
+    | CLet of { lhs : string typed; rhs : rhs typed; letbody : comp typed }
+    | CMatch of { matched : value typed; match_cases : match_case list }
   [@@deriving sexp]
 
   open Sugar
@@ -107,8 +117,11 @@ struct
       (fixbody : comp typed) : value typed =
     (VFix { fixname; fixarg; fixbody }) #: fixname.ty
 
-  let mk_lete lhs rhs letbody = (CLetE { lhs; rhs; letbody }) #: letbody.ty
+  let mk_let lhs rhs letbody = (CLet { lhs; rhs; letbody }) #: letbody.ty
   let mk_app appf apparg = (CApp { appf; apparg }) #: (get_retty appf.ty)
+
+  let mk_appop op appopargs =
+    (CAppOp { op; appopargs }) #: (snd (destruct_arr_tp op.ty))
 
   let lam_to_fix fixname (body : value typed) : value typed =
     match body.x with
@@ -140,22 +153,11 @@ struct
     in
     { constructor; args; exp }
 
-  and subst_comp (x, v) e : comp typed =
+  and subst_rhs (x, v) e : rhs typed =
     let ex =
       match e.x with
       | CErr -> CErr
-      | CVal value -> CVal (subst_value (x, v) value #: e.ty).x
-      | CMatch { matched; match_cases } ->
-          CMatch
-            {
-              matched = subst_value (x, v) matched;
-              match_cases = List.map (subst_match_case (x, v)) match_cases;
-            }
-      | CLetE { lhs; rhs; letbody } ->
-          let letbody =
-            if String.equal lhs.x x then letbody else subst_comp (x, v) letbody
-          in
-          CLetE { lhs; rhs = subst_comp (x, v) rhs; letbody }
+      | CRhsV value -> CRhsV (subst_value (x, v) value #: e.ty).x
       | CApp { appf; apparg } ->
           CApp
             {
@@ -164,6 +166,25 @@ struct
             }
       | CAppOp { op; appopargs } ->
           CAppOp { op; appopargs = List.map (subst_value (x, v)) appopargs }
+    in
+    ex #: e.ty
+
+  and subst_comp (x, v) e : comp typed =
+    let ex =
+      match e.x with
+      | CVal value -> CVal (subst_value (x, v) value #: e.ty).x
+      | CMatch { matched; match_cases } ->
+          CMatch
+            {
+              matched = subst_value (x, v) matched;
+              match_cases = List.map (subst_match_case (x, v)) match_cases;
+            }
+      | CLet { lhs; rhs; letbody } ->
+          let rhs = subst_rhs (x, v) rhs in
+          let letbody =
+            if String.equal lhs.x x then letbody else subst_comp (x, v) letbody
+          in
+          CLet { lhs; rhs; letbody }
     in
     ex #: e.ty
 

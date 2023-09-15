@@ -48,6 +48,13 @@ module F (I : BindingName) (E : Layoutable) = struct
   let fold_right = List.fold_right
   let fold_left = List.fold_left
   let filter_map = List.filter_map
+
+  let update ctx (id, tau) =
+    List.filter_map
+      (fun (id', tau') ->
+        if I.equal id id' then Some (id, tau) else Some (id', tau'))
+      ctx
+
   let pretty_layout ctx = List.split_by ", " layout_binding ctx
 
   let pretty_print ctx =

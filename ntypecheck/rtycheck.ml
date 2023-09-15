@@ -6,7 +6,12 @@ open RtyRaw
 let check opctx ctx (rty : rty) : rty =
   let rec aux ctx rty =
     match rty with
-    | BaseRty { ou; cty } -> BaseRty { ou; cty = Ctycheck.check opctx ctx cty }
+    | SingleRty lit ->
+        let lit =
+          Aux.force_typed @@ Litcheck.check opctx ctx lit.Nt.x #: None lit.Nt.ty
+        in
+        SingleRty lit
+    | BaseRty { cty } -> BaseRty { cty = Ctycheck.check opctx ctx cty }
     | ArrRty { arr_kind; rarg; retrty } ->
         let rarg = { rx = rarg.rx; rty = aux ctx rarg.rty } in
         let () =

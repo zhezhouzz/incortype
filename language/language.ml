@@ -35,7 +35,16 @@ module TypedCore = struct
 
   let layout_term e =
     StructureRaw.layout_term @@ Coersion_termlang.besome_typed_term e
-  (* open Sugar *)
+
+  open Sugar
+
+  let value_to_lit v =
+    match v with
+    | VVar y -> Lit.Lit.AVar y
+    | VConst c -> Lit.Lit.AC c
+    | _ -> _failatwith __FILE__ __LINE__ "die"
+
+  let tvalue_to_tlit v = (value_to_lit v.x) #: v.ty
 
   (* let _value_to_lit file line v = *)
   (*   let lit = *)
@@ -51,6 +60,21 @@ end
 
 module Rty = struct
   include Rty
+
+  (* normalize name *)
+
+  let rec normalize_name tau =
+    match tau with
+    | SingleRty _ -> tau
+    | BaseRty { cty } -> (
+        let { v; phi } = C.normalize_name cty in
+        match P.get_eq_by_name phi v_name with
+        | None -> BaseRty { cty = { v; phi } }
+        | Some tlit -> SingleRty tlit)
+    | ArrRty { arr_kind; rarg; retrty } ->
+        let rarg = rarg.rx #:: (normalize_name rarg.rty) in
+        let retrty = normalize_name retrty in
+        ArrRty { arr_kind; rarg; retrty }
 
   let layout_lit lit = To_lit.layout_lit (Coersion_lit.besome lit)
   let layout_prop prop = To_qualifier.layout (Coersion_qualifier.besome prop)

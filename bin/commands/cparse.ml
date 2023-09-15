@@ -82,20 +82,20 @@ let test =
                 normalized
             in
             let assertions = Structure.get_assert_rtys source_code in
-            let ress =
-              List.fold_left
-                ~f:(fun ress (name, tau) ->
-                  let _ = Printf.printf "name: %s\n" name in
-                  let _, prog =
-                    List.find_exn
-                      ~f:(fun (x, _) -> String.equal x name)
-                      normalized
-                  in
-                  let res =
-                    Typecheck.Bidirectional.typecheck primop_rctx rctx prog tau
-                  in
-                  res :: ress)
-                ~init:[] assertions
-            in
+            (* let ress = *)
+            (*   List.fold_left *)
+            (*     ~f:(fun ress (name, tau) -> *)
+            (*       let _ = Printf.printf "name: %s\n" name in *)
+            (*       let _, prog = *)
+            (*         List.find_exn *)
+            (*           ~f:(fun (x, _) -> String.equal x name) *)
+            (*           normalized *)
+            (*       in *)
+            (*       let res = *)
+            (*         Typecheck.Bidirectional.typecheck primop_rctx rctx prog tau *)
+            (*       in *)
+            (*       res :: ress) *)
+            (*     ~init:[] assertions *)
+            (* in *)
             ()) );
     ]

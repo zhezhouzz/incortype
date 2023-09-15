@@ -5,7 +5,7 @@
  (modules
    typeerr
    ; linear_typectx
-   ; bitypectx
+   bitypectx
    type_ctx
    typingaux
    bidirectional

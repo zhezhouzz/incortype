@@ -132,7 +132,7 @@ module F (L : Lit.T) = struct
     | _ -> (
         match get_eq_by_name xprop u.Nt.x with
         | None -> Qted (qt, u, body)
-        | Some z -> subst (u.Nt.x, z) prop)
+        | Some z -> subst (u.Nt.x, z.x) prop)
 
   let smart_sigma = smart_qted Ex
   let smart_pi = smart_qted Fa

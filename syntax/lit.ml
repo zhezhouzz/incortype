@@ -41,7 +41,7 @@ module type T = sig
   val tsfv : lit typed list -> string list
 
   (* aux *)
-  val get_eq_by_name : lit -> string -> lit option
+  val get_eq_by_name : lit -> string -> lit typed option
 
   (* val mk_int_l1_eq_l2 : lit -> lit -> lit *)
   (* val find_assignment_of_intvar : lit -> string -> lit option *)
@@ -83,8 +83,8 @@ struct
   let get_eq_by_name lit x =
     let* l1, l2 = get_eq_args_opt lit in
     match (l1.x, l2.x) with
-    | AVar x1, _ when String.equal x x1 -> Some l2.x
-    | _, AVar x2 when String.equal x x2 -> Some l1.x
+    | AVar x1, _ when String.equal x x1 -> Some l2
+    | _, AVar x2 when String.equal x x2 -> Some l1
     | _, _ -> None
 
   (* let mk_eq_lit { x; ty } lit = *)

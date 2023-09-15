@@ -4,8 +4,6 @@ module F (L : Lit.T) = struct
   include Termlang.F (L)
   module R = Rty.F (L)
 
-  type rty_kind = RtyLib | RtyToCheck
-
   type entry =
     | Type_dec of Type_dec.t
     | Func_dec of string Normalty.Ntyped.typed

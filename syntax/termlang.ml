@@ -42,6 +42,7 @@ module type T = sig
   val uncurry : term typed -> string typed list * term typed
   val curry : string typed list * term typed -> term typed
   val de_typed_tuple : term typed -> term typed list
+  val mk_lam : string typed -> term typed -> term typed
 end
 
 module F (Ty : Typed.T) : T with type t = Ty.t and type 'a typed = 'a Ty.typed =
@@ -103,4 +104,7 @@ struct
       args body
 
   let de_typed_tuple { x; ty } = match x with Tu es -> es | _ -> [ { x; ty } ]
+
+  let mk_lam (lamarg : string typed) (lambody : term typed) : term typed =
+    (Lam { lamarg; lambody }) #: (mk_arr lamarg.ty lambody.ty)
 end

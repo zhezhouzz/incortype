@@ -5,17 +5,7 @@ module Type = Normalty.Frontend
 open Syntax
 open RtyRaw.P
 open Sugar
-
-let typed_to_ocamlexpr_desc f expr =
-  match expr.ty with
-  | None -> f expr.x
-  | Some ty ->
-      Pexp_constraint
-        (To_expr.desc_to_ocamlexpr @@ f expr.x, Type.t_to_core_type ty)
-
-let notated (name, t) =
-  Type.desc_to_ct
-  @@ Ptyp_extension (Location.mknoloc name, PTyp (Type.t_to_core_type t))
+open Aux
 
 let quantifier_to_patten (q, u) =
   To_pat.dest_to_pat

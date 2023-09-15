@@ -4,49 +4,55 @@ open TypedCore
 open Sugar
 open Zzdatatype.Datatype
 
-type cont = comp typed -> comp typed
+type cont = rhs typed -> comp typed
 type vcont = value typed -> comp typed
 type vconts = value typed list -> comp typed
 
 let new_x () = Rename.unique "x"
-let construct_lete lhs rhs letbody = (CLetE { lhs; rhs; letbody }) #: letbody.ty
+let construct_letv lhs rhs letbody = (CLet { lhs; rhs; letbody }) #: letbody.ty
 let var_to_v x = (VVar x.x) #: x.ty
 
-let vcont_to_cont (k : value typed -> comp typed) (rhs : comp typed) :
-    comp typed =
-  let lhs = (new_x ()) #: rhs.ty in
-  construct_lete lhs rhs (k (var_to_v lhs))
+(* let vcont_to_cont (k : value typed -> comp typed) (rhs : value typed) : *)
+(*     comp typed = *)
+(*   let lhs = (new_x ()) #: rhs.ty in *)
+(*   construct_letv lhs rhs (k (var_to_v lhs)) *)
 
 let rec normalize_term (tm : T.term T.typed) : comp typed =
-  normalize (fun x -> x) tm
+  normalize_name (fun v -> (CVal v.x) #: v.ty) tm
 
 and normalize (k' : cont) (expr : T.term T.typed) : comp typed =
   let k e = k' e #: expr.ty in
   match expr.x with
   | T.Err -> k CErr
   | T.Tu _ -> _failatwith __FILE__ __LINE__ "die"
-  | T.Var var -> k (CVal (VVar var))
-  | T.Const c -> k (CVal (VConst c))
+  | T.Var var -> k (CRhsV (VVar var))
+  | T.Const c -> k (CRhsV (VConst c))
   | T.Lam { lamarg; lambody } ->
-      k (CVal (VLam { lamarg; lambody = normalize_term lambody }))
+      k (CRhsV (VLam { lamarg; lambody = normalize_term lambody }))
   | T.(Let { if_rec; lhs; rhs; letbody }) -> (
       match (if_rec, lhs) with
-      | true, fixname :: fixarg :: args ->
-          normalize
-            (fun rhs ->
-              let fixbody =
-                List.fold_left
-                  (fun lambody lamarg -> tto_comp (mk_lam lamarg lambody))
-                  rhs args
+      | true, fixname :: args ->
+          let fixbody =
+            List.fold_left
+              (fun lambody lamarg -> T.mk_lam lamarg lambody)
+              rhs args
+          in
+          normalize_name
+            (fun v ->
+              let v' =
+                match v.x with
+                | VLam { lamarg; lambody } ->
+                    VFix { fixname; fixarg = lamarg; fixbody = lambody }
+                | _ -> _failatwith __FILE__ __LINE__ "die"
               in
-              let rhs = tto_comp @@ mk_fix fixname fixarg fixbody in
-              construct_lete fixname rhs (normalize k' letbody))
-            rhs
+              let rhs = (CRhsV v') #: v.ty in
+              construct_letv fixname rhs (normalize k' letbody))
+            fixbody
       | true, _ -> _failatwith __FILE__ __LINE__ "bad"
       | false, [] -> _failatwith __FILE__ __LINE__ "bad"
       | false, [ lhs ] ->
           normalize
-            (fun rhs -> construct_lete lhs rhs (normalize k' letbody))
+            (fun rhs -> construct_letv lhs rhs (normalize k' letbody))
             rhs
       | false, _ -> _failatwith __FILE__ __LINE__ "die")
   | T.(AppOp (op, es)) ->
@@ -54,7 +60,8 @@ and normalize (k' : cont) (expr : T.term T.typed) : comp typed =
   | T.(App (_, [])) -> _failatwith __FILE__ __LINE__ "die"
   | T.(App (func, [ arg ])) ->
       normalize_name
-        (fun appf -> normalize_name (fun arg -> k' (mk_app appf arg)) arg)
+        (fun appf ->
+          normalize_name (fun apparg -> k (CApp { appf; apparg })) arg)
         func
   | T.(App _) -> _failatwith __FILE__ __LINE__ "die"
   | T.(Ite (cond, et, ef)) ->
@@ -83,10 +90,10 @@ and normalize_name (k : vcont) (expr : T.term T.typed) : comp typed =
   normalize
     (fun e ->
       match e.x with
-      | CVal v -> k v #: e.ty
+      | CRhsV v -> k v #: e.ty
       | _ ->
           let lhs = (new_x ()) #: e.ty in
-          construct_lete lhs e (k @@ var_to_v lhs))
+          construct_letv lhs e (k @@ var_to_v lhs))
     expr
 
 and normalize_names (k : vconts) (es : T.term T.typed list) : comp typed =
