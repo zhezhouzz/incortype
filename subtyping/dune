@@ -1,0 +1,10 @@
+(library
+ (name subtyping)
+ (wrapped true)
+ (libraries utils language core env smtquery)
+ (modules
+   prefix
+   subcty
+   sub
+   subtyping
+ ))

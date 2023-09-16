@@ -27,10 +27,18 @@ module F (L : Lit.T) = struct
     let* { x; _ } = get_eq_by_name phi v.x in
     Some Nt.{ x; ty = v.ty }
 
+  let from_tlit Nt.{ x; ty } =
+    let v = Nt.{ x = v_name; ty } in
+    let lit = { x; ty = from_nt ty } in
+    let vlit = { x = AVar v_name; ty = from_nt ty } in
+    { v; phi = P.mk_eq vlit lit }
+
   (* subst *)
   let subst (y, replacable) { v; phi } =
     if String.equal y v.x then { v; phi }
     else { v; phi = P.subst (y, replacable) phi }
+
+  let subst_id (y, z) cty = subst (y, AVar z) cty
 
   (* fv *)
   let fv { v; phi } =

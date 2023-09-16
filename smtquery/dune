@@ -1,0 +1,13 @@
+(library
+ (name smtquery)
+ (wrapped true)
+ (libraries utils language core env z3 zzdatatype)
+ (modules
+   z3aux
+   litencoding
+   propencoding
+   check
+   smtquery
+)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test)))

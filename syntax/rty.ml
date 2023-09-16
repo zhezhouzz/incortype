@@ -21,6 +21,28 @@ module F (L : Lit.T) = struct
 
   open Sugar
 
+  let cty_to_overrty cty = BaseRty { cty }
+
+  let cty_to_underrty cty =
+    let x = Rename.unique "z" in
+    ArrRty
+      {
+        arr_kind = GhostArr;
+        rarg = { rx = Some x; rty = BaseRty { cty } };
+        retrty = SingleRty Nt.{ x = AVar x; ty = C.erase cty };
+      }
+
+  let to_under_rty_opt = function
+    | ArrRty
+        {
+          arr_kind = GhostArr;
+          rarg = { rx = Some x; rty = BaseRty { cty } };
+          retrty = SingleRty Nt.{ x = AVar y; _ };
+        }
+      when String.equal x y ->
+        Some cty
+    | _ -> _failatwith __FILE__ __LINE__ "die"
+
   (* erase *)
 
   let rec erase_rty = function
@@ -83,6 +105,10 @@ module F (L : Lit.T) = struct
         gparas res
     in
     res
+
+  let destruct_ghost_arr_rty rty =
+    let a, b, c = destruct_arr_rty rty in
+    (a, reconstruct_rty ([], b, c))
 
   let is_valid rty =
     match destruct_arr_rtyopt rty with Some _ -> true | None -> false

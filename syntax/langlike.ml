@@ -58,6 +58,8 @@ let refinement_kind_eq a b =
   | Over, Over | Under, Under | Overlap, Overlap -> true
   | _, _ -> false
 
+let flip_qt = function Fa -> Ex | Ex -> Fa
+
 type rty_kind = RtyLib | RtyToCheck
 
 let v_name = "v"
