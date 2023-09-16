@@ -4,8 +4,24 @@ open Parsetree
 open Zzdatatype.Datatype
 module Type = Normalty.Frontend
 module Nt = Normalty.Ntyped
+open Langlike
 open Syntax.RtyRaw.C
 open Sugar
+
+let refinement_kind_of_attributes attr =
+  match attr with
+  | [] -> Overlap
+  | [ a ] when String.equal a.attr_name.txt "over" -> Over
+  | [ a ] when String.equal a.attr_name.txt "under" -> Under
+  | [ a ] when String.equal a.attr_name.txt "incor" -> Overlap
+  | _ -> _failatwith __FILE__ __LINE__ "die"
+
+let refinement_kind_of_ocaml e = refinement_kind_of_attributes e.pexp_attributes
+
+let refinement_kind_of_ocaml_v expr =
+  match expr.pexp_desc with
+  | Pexp_constraint (_, ct) -> refinement_kind_of_attributes ct.ptyp_attributes
+  | _ -> _failatwith __FILE__ __LINE__ "die"
 
 let get_self ct =
   let open Nt in

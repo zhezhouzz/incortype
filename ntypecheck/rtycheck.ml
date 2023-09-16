@@ -31,5 +31,4 @@ let check opctx ctx (rty : rty) : rty =
         in
         ArrRty { arr_kind; rarg; retrty = aux ctx' retrty }
   in
-
   aux ctx rty

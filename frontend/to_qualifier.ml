@@ -111,8 +111,10 @@ module F (S : S) = struct
   open S
 
   let rec layout = function
+    | Lit (AC (Const.B true)) -> sym_true
+    | Lit (AC (Const.B false)) -> sym_false
     | Lit lit -> To_lit.layout_lit lit
-    | Not p -> spf "(%s %s)" sym_not @@ layout p
+    | Not p -> spf "%s(%s)" sym_not @@ layout p
     | Ite (p1, p2, p3) ->
         spf "(if %s then %s else %s)" (layout p1) (layout p2) (layout p3)
     | Binary (binary, p1, p2) ->

@@ -5,6 +5,7 @@ module F (L : Lit.T) = struct
   module P = Qualifier.F (L)
   include P
   open Zzdatatype.Datatype
+  open Sugar
 
   type cty = { v : string Nt.typed; phi : prop } [@@deriving sexp]
   type 'a ctyped = { cx : 'a; cty : cty }
@@ -21,6 +22,10 @@ module F (L : Lit.T) = struct
     { v; phi }
 
   let to_v_prop { v; phi } = (v, phi)
+
+  let to_tlit_opt { v; phi } =
+    let* { x; _ } = get_eq_by_name phi v.x in
+    Some Nt.{ x; ty = v.ty }
 
   (* subst *)
   let subst (y, replacable) { v; phi } =

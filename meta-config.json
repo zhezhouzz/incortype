@@ -7,13 +7,19 @@
     "show_queries": false,
     "show_stat": false,
     "show_info": false,
-    "show_debug": false
+    "show_debug": false,
+    "debug_kw": [
+        "ntypecheck/litcheck.ml",
+        "frontend/to_rty.ml",
+        // "frontend/pty.ml",
+        "use_file_names"
+    ]
   },
   "logfile": ".log",
   "resfile": ".result",
   "benchmark_table_file": "data/benchmark.json",
   "prim_path": {
-      "builtin_normal_typing": "data/predefined/builtin_normal_typing.ml",
-      "builtin_rty_typing": "data/predefined/builtin_rty_typing.ml"
+    "builtin_normal_typing": "data/predefined/builtin_normal_typing.ml",
+    "builtin_rty_typing": "data/predefined/builtin_rty_typing.ml"
   }
 }

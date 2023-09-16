@@ -11,7 +11,13 @@ let check opctx ctx (lit : lit typed) (ty : Nt.t) : lit typed =
     | None -> (
         match lit.x with
         | AC c -> Nt.{ x = AC c; ty = infer_const_ty ctx c }
-        | AVar x -> Nt.{ x = AVar x; ty = Ctx.find ctx x }
+        | AVar x -> (
+            try Nt.{ x = AVar x; ty = Ctx.find ctx x }
+            with e ->
+              Pp.printf
+                "@{<bold>@{<red>Possible Reason:@} under return type should be \
+                 locally closed.@}\n";
+              raise e)
         | AEq _ ->
             Nt.{ x = (type_check ctx (lit, Nt.Ty_bool)).x; ty = Nt.Ty_bool }
         | AAppOp (f, args) ->
@@ -26,11 +32,12 @@ let check opctx ctx (lit : lit typed) (ty : Nt.t) : lit typed =
             in
             Nt.{ x = AAppOp (f, args); ty = retty })
   and type_check ctx (lit, ty) : lit typed =
-    (* let () = *)
-    (*   Printf.printf "Check %s <<= %s\n" *)
-    (*     (To_lit.layout_typed_lit lit) *)
-    (*     (Nt.layout ty) *)
-    (* in *)
+    let _ =
+      Env.show_debug_kw __FILE__ (fun _ ->
+          Printf.printf "%s |- Check %s <<= %s\n" (layout_typectx ctx)
+            (To_lit.layout_typed_lit lit)
+            (Nt.layout ty))
+    in
     let _ = _type_unify __FILE__ __LINE__ lit.ty (Some ty) in
     match lit.x with
     | AC _ | AVar _ ->

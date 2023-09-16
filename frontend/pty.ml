@@ -47,7 +47,12 @@ let rec destruct_arr_ptyopt rty =
   | PArrRty { arr_kind = GhostArr; rarg; retrty } -> (
       let* gparartys, parartys, retrty = destruct_arr_ptyopt retrty in
       match (rarg.px, rarg.pty) with
-      | Some x, PBaseRty { refinement_kind = Over; cty } ->
+      | Some x, PBaseRty { refinement_kind; cty } ->
+          let () =
+            match refinement_kind with
+            | Under -> _failatwith __FILE__ __LINE__ "die"
+            | _ -> ()
+          in
           Some ((x, cty) :: gparartys, parartys, retrty)
       | _, _ -> _failatwith __FILE__ __LINE__ "die")
 
@@ -85,25 +90,50 @@ let rec fv_pty rty =
       in
       argfv @ retfv
 
+let rec raw_rty_to_pty rty =
+  match rty with
+  | SingleRty tlit -> PSingleRty tlit
+  | BaseRty { cty } -> PBaseRty { refinement_kind = Overlap; cty }
+  | ArrRty { arr_kind; rarg; retrty } ->
+      let rarg = { px = rarg.rx; pty = raw_rty_to_pty rarg.rty } in
+      let retrty = raw_rty_to_pty retrty in
+      PArrRty { arr_kind; rarg; retrty }
+
 let rec rty_to_pty rty =
   let gparas, paras, retty = destruct_arr_rty rty in
   let paras =
     List.map (fun { rx; rty } -> { px = rx; pty = rty_to_pty rty }) paras
   in
+  let _ =
+    Env.show_debug_kw __FILE__ (fun _ ->
+        let () =
+          Printf.printf "rty:\n%s\n" (Sexplib.Sexp.to_string @@ sexp_of_rty rty)
+        in
+        let () =
+          Printf.printf "retty:\n%s\n"
+            (Sexplib.Sexp.to_string @@ sexp_of_rty retty)
+        in
+        ())
+  in
   let gparas, retty =
     match (gparas, retty) with
-    | (x, cty) :: gparas, SingleRty { x = Syntax.LRaw.AVar y; ty } ->
-        (* let dummy_ret = *)
-        (*   PBaseRty { refinement_kind = Overlap; cty = C.mk_bot Nt.int_ty } *)
-        (* in *)
-        (* let dummy_pty = reconstruct_pty (gparas, paras, dummy_ret) in *)
-        if String.equal x y then
-          ((x, cty) :: gparas, PBaseRty { refinement_kind = Overlap; cty })
-        else (gparas, PSingleRty { x = Syntax.LRaw.AVar y; ty })
+    | _, SingleRty tlit -> (
+        match gparas with
+        | (x, cty) :: gparas
+          when Syntax.LRaw.lit_eq (Syntax.LRaw.AVar x) tlit.x
+               && List.for_all
+                    (fun (_, cty) ->
+                      not (List.exists (String.equal x) (C.fv cty)))
+                    gparas
+               && List.for_all
+                    (fun y -> not (List.exists (String.equal x) (fv_pty y.pty)))
+                    paras ->
+            (gparas, PBaseRty { refinement_kind = Under; cty })
+        | _ -> (gparas, PSingleRty tlit))
     | _, BaseRty { cty } -> (gparas, PBaseRty { refinement_kind = Overlap; cty })
     | _, _ -> _failatwith __FILE__ __LINE__ "die"
   in
-  reconstruct_pty (gparas, paras, retty)
+  unify_paras_pty @@ reconstruct_pty (gparas, paras, retty)
 
 let rec pty_to_rty pty =
   let gparas, paras, retty =
@@ -117,11 +147,13 @@ let rec pty_to_rty pty =
   let gparas, retty =
     match retty with
     | PSingleRty tlit -> (gparas, SingleRty tlit)
-    | PBaseRty { refinement_kind = Under; cty } ->
-        let retname = Rename.unique "ret" in
-        let retty = SingleRty Nt.((C.AVar retname) #: cty.v.ty) in
-        ((retname, cty) :: gparas, retty)
-    | PBaseRty { refinement_kind = Overlap; cty } -> (gparas, BaseRty { cty })
+    | PBaseRty { refinement_kind; cty } -> (
+        match refinement_kind with
+        | Under ->
+            let retname = Rename.unique "ret" in
+            let retty = SingleRty Nt.((C.AVar retname) #: cty.v.ty) in
+            ((retname, cty) :: gparas, retty)
+        | Overlap | Over -> (gparas, BaseRty { cty }))
     | _ -> _failatwith __FILE__ __LINE__ "die"
   in
-  reconstruct_rty (gparas, paras, retty)
+  normalize_name @@ reconstruct_rty (gparas, paras, retty)

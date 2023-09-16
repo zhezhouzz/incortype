@@ -26,6 +26,9 @@ let infer_op opctx x =
 open ONt
 open Zzdatatype.Datatype
 
+let layout_typectx ctx =
+  List.split_by_comma (fun (x, ty) -> spf "%s:%s" x @@ Nt.layout ty) ctx
+
 let _unify = _type_unify
 let _unify_ = Nt._type_unify_
 

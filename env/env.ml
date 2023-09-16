@@ -9,6 +9,7 @@ type mode =
       show_stat : bool;
       show_info : bool;
       show_debug : bool;
+      show_debug_kw : string list;
     }
   | Release
 [@@deriving sexp]
@@ -35,6 +36,14 @@ let get_meta () =
 
 let get_mode () = (get_meta ()).mode
 let get_max_printing_size () = (get_meta ()).max_printing_size
+
+let show_debug_kw kw (f : unit -> unit) =
+  (* let () = Printf.printf "KW = %s\n" kw in *)
+  match get_mode () with
+  | Debug { show_debug_kw; _ } when List.exists (String.equal kw) show_debug_kw
+    ->
+      f ()
+  | _ -> ()
 
 let show_debug_preprocess (f : unit -> unit) =
   match get_mode () with
@@ -95,6 +104,10 @@ let load_meta meta_fname =
         let get_bool field =
           metaj |> member "debug_info" |> member field |> to_bool
         in
+        let get_kws () =
+          metaj |> member "debug_info" |> member "debug_kw" |> to_list
+          |> List.map to_string
+        in
         Debug
           {
             show_preprocess = get_bool "show_preprocess";
@@ -105,6 +118,7 @@ let load_meta meta_fname =
             show_stat = get_bool "show_stat";
             show_info = get_bool "show_info";
             show_debug = (try get_bool "show_debug" with _ -> false);
+            show_debug_kw = (try get_kws () with _ -> []);
           }
     | "release" -> Release
     | _ -> failwith "config: unknown mode"

@@ -1,7 +1,7 @@
 open Core
 open Caux
 
-type format = Raw | Typed | MonadicNormalForm
+type format = Raw | Typed | ANF
 
 open Language
 

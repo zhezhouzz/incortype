@@ -16,6 +16,8 @@ module type T = sig
     | AAppOp of Op.t typed * lit typed list
   [@@deriving sexp]
 
+  val lit_eq : lit -> lit -> bool
+
   (* for parsing *)
   val mk_bool : bool -> lit
   val mk_eq : lit typed -> lit typed -> lit typed
@@ -62,6 +64,7 @@ struct
 
   open Sugar
 
+  let lit_eq l1 l2 = Sexplib.Sexp.equal (sexp_of_lit l1) (sexp_of_lit l2)
   let id_to_lit x = AVar x
   let to_id = function AVar x -> x | _ -> _failatwith __FILE__ __LINE__ "die"
   let tto_id x = to_id #-> x

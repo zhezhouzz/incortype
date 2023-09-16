@@ -22,8 +22,8 @@ end
 module DetailsSetting = struct
   let sym_true = "⊤"
   let sym_false = "⊥"
-  let sym_and = " ∧ "
-  let sym_or = " ∨ "
+  let sym_and = "∧"
+  let sym_or = "∨"
   let sym_not = "¬"
   let sym_implies = "⟹"
   let sym_iff = "⟺"
@@ -36,8 +36,8 @@ end
 module PpSetting = struct
   let sym_true = "⊤"
   let sym_false = "⊥"
-  let sym_and = " ∧ "
-  let sym_or = " ∨ "
+  let sym_and = "∧"
+  let sym_or = "∨"
   let sym_not = "¬"
   let sym_implies = "⟹"
   let sym_iff = "⟺"
@@ -50,8 +50,8 @@ end
 module CoqSetting = struct
   let sym_true = "True"
   let sym_false = "False"
-  let sym_and = "/\\ "
-  let sym_or = " \\/ "
+  let sym_and = "/\\"
+  let sym_or = "\\/"
   let sym_not = "~"
   let sym_implies = "->"
   let sym_iff = "<->"

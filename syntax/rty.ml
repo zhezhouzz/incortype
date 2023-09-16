@@ -141,6 +141,20 @@ module F (L : Lit.T) = struct
         in
         argfv @ retfv
 
+  (* normalize name *)
+
+  let rec normalize_name tau =
+    match tau with
+    | SingleRty _ -> tau
+    | BaseRty { cty } -> (
+        match C.to_tlit_opt cty with
+        | None -> BaseRty { cty = C.normalize_name cty }
+        | Some tlit -> SingleRty tlit)
+    | ArrRty { arr_kind; rarg; retrty } ->
+        let rarg = rarg.rx #:: (normalize_name rarg.rty) in
+        let retrty = normalize_name retrty in
+        ArrRty { arr_kind; rarg; retrty }
+
   (* fresh local name *)
 
   let rec fresh_local_name tau =
