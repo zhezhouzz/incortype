@@ -57,14 +57,20 @@ module F (I : BindingName) (E : Layoutable) = struct
 
   let pretty_layout ctx = List.split_by ", " layout_binding ctx
 
+  let pretty_print_one (x, ty) =
+    Pp.printf "%s:@{<green>%s@}" (I.layout x) (E.layout ty)
+
   let pretty_print ctx =
     Env.show_debug_typing (fun _ ->
-        if List.length ctx == 0 then Pp.printf "@{<green>∅@}"
-        else
-          List.iter
-            (fun (x, ty) ->
-              Pp.printf "%s:@{<green>%s@}," (I.layout x) (E.layout ty))
-            ctx)
+        match List.last_destruct_opt ctx with
+        | None -> Pp.printf "@{<green>∅@}"
+        | Some (ctx, last) ->
+            List.iter
+              (fun one ->
+                pretty_print_one one;
+                Pp.printf ", ")
+              ctx;
+            pretty_print_one last)
 
   let pretty_print_lines ctx =
     Env.show_debug_typing (fun _ ->

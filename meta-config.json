@@ -4,13 +4,13 @@
   "debug_info": {
     "show_preprocess": false,
     "show_typing": true,
-    "show_queries": false,
+    "show_queries": true,
     "show_stat": false,
     "show_info": false,
     "show_debug": false,
     "debug_kw": [
-        "ntypecheck/litcheck.ml",
-        "frontend/to_rty.ml",
+        // "ntypecheck/litcheck.ml",
+        // "frontend/to_rty.ml",
         // "frontend/pty.ml",
         "use_file_names"
     ]

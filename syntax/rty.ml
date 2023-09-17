@@ -21,6 +21,10 @@ module F (L : Lit.T) = struct
 
   open Sugar
 
+  let single_to_base = function
+    | SingleRty tlit -> BaseRty { cty = C.from_tlit tlit }
+    | _ as rty -> rty
+
   let cty_to_overrty cty = BaseRty { cty }
 
   let cty_to_underrty cty =

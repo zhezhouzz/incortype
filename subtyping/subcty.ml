@@ -3,11 +3,8 @@ open Rty
 open Zzdatatype.Datatype
 open Sugar
 
-let sub_cty (ctx : RTypectx.t) (cty1, cty2) =
-  let prefix2 = Prefix.ctx_to_prefix ctx in
-  let prefix1 = Prefix.flip_prefix prefix2 in
-  let prefix1, cty1 = Prefix.fresh_judgement (prefix1, cty1) in
-  let prefix = Prefix.prefix_force_epr (prefix1 @ prefix2) in
+let sub_cty_bool_raw (fa_list, ex_list) (cty1, cty2) =
+  let prefix = Prefix.eqr_list_to_prefix fa_list ex_list in
   let query = Prefix.subtypig_to_prop prefix (cty1, cty2) in
   let () =
     Env.show_debug_queries @@ fun _ ->
@@ -21,8 +18,11 @@ let sub_cty (ctx : RTypectx.t) (cty1, cty2) =
   in
   Smtquery.cached_check_bool query
 
-let sub_cty_bool (pctx : RTypectx.t) (cty1, cty2) = sub_cty pctx (cty1, cty2)
-(* match sub_cty pctx cty1 cty2 with None -> true | Some _ -> false *)
+let sub_cty_bool (ctx : RTypectx.t) (cty1, cty2) =
+  let fa_list, ex_list, cty1, cty2 =
+    Prefix.prefix_to_subtyping ctx (cty1, cty2)
+  in
+  sub_cty_bool_raw (fa_list, ex_list) (cty1, cty2)
 
 let is_bot_cty pctx cty =
   let bot_cty = C.mk_bot (C.erase cty) in
